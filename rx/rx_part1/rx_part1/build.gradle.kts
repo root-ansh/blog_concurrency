@@ -15,5 +15,10 @@ tasks.withType<KotlinCompile> { kotlinOptions.jvmTarget = "1.8" }
 
 application.mainClass.set("MainKt")
 
-dependencies { testImplementation(kotlin("test")) }
+dependencies {
+    implementation( "io.reactivex.rxjava3:rxjava:3.1.6")
+    implementation("org.json:json:20230227")
+
+    testImplementation(kotlin("test"))
+}
 
