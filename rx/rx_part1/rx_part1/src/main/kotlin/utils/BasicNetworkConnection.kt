@@ -1,3 +1,5 @@
+package utils
+
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -7,14 +9,14 @@ import java.util.zip.GZIPInputStream
 
 
 object BasicNetworkConnection {
-    private const val server = "https://test-server-qn18.onrender.com/ok" // checkout https://github.com/root-ansh/web_project_test_server for actual server url
-    private  val queryParams = hashMapOf("delay" to "2000")
-    private  val reqHeaders = hashMapOf(
-        "Connection" to "Keep-Alive",
-        "Accept-Encoding" to "gzip",
-    )
 
-    fun connect(url :String = server, query:Map<String,String> = queryParams, headers:Map<String,String> = reqHeaders, log:(Any)->Unit = { println(it) }){
+
+    fun networkConnectionSync(
+        url :String =  "https://test-server-qn18.onrender.com/ok" , // checkout https://github.com/root-ansh/web_project_test_server for actual server url
+        query:Map<String,String> = hashMapOf("delay" to "2000"),
+        headers:Map<String,String> = hashMapOf("Connection" to "Keep-Alive", "Accept-Encoding" to "gzip",),
+        log:(Any)->Unit = { println(it) }
+    ){
         log("connect() called with: url = $url, query = $query, headers = $headers, log = $log")
         val finalUrl = buildString {
             append(url)
@@ -60,8 +62,10 @@ object BasicNetworkConnection {
             log("response string: $contentJson")
         }
     }
+
+    @JvmStatic
+    fun main(args: Array<String>) {
+        networkConnectionSync()
+    }
 }
 
-fun main(args: Array<String>) {
-    BasicNetworkConnection.connect()
-}

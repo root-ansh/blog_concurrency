@@ -2,7 +2,7 @@ package work.curioustools.basic
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import kotlin.concurrent.thread
+import work.curioustools.basic.concurrency_scenarios.BasicNetworkConnection
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

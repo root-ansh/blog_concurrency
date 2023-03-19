@@ -1,32 +1,23 @@
-import io.reactivex.rxjava3.core.Flowable
-import io.reactivex.rxjava3.core.Observable
-import io.reactivex.rxjava3.core.ObservableEmitter
-import io.reactivex.rxjava3.core.ObservableOnSubscribe
+import io.reactivex.rxjava3.core.*
 import java.util.concurrent.TimeUnit
 
-class PatternEmitter(private val pattern:String):ObservableOnSubscribe<Char>{
-    constructor(patternIdx:Int):this(Patterns.patters[patternIdx])
-    override fun subscribe(emitter: ObservableEmitter<Char>) {
-       runCatching {
-            pattern.forEach {
-                Thread.sleep(20)
-                emitter.onNext(it)
-            }
-            emitter.onComplete()
-        }.getOrElse { emitter.onError(it) }
+
+class MyObservable:Observable<Char>(){
+    override fun subscribeActual(observer: Observer<in Char>) {
+
     }
 
+
+
 }
 
-fun t4(){
-    Observable.create(PatternEmitter(0)).subscribe {  print(it) }
-}
+
 
 fun t3(){
     //Observable<Long> secondIntervals =
     //Observable.interval(1, TimeUnit.SECONDS);
     //secondIntervals.subscribe(s -> System.out.println(s))
-    val intervalObservable = Observable.interval(1,TimeUnit.SECONDS)
+    val intervalObservable: Observable<Long> = Observable.interval(1,TimeUnit.SECONDS)
     intervalObservable.subscribe { println("fired: $it") }
     Thread.sleep(5000)
 }
@@ -46,6 +37,6 @@ fun t1(){
 fun main(args: Array<String>) {
     //Flowable.just("Hello world").subscribe(System.out::println);
     println("Hello World!")
-    t4()
+    t3()
 
 }

@@ -1,3 +1,5 @@
+package utils
+
 object Patterns {
     val  patters = arrayOf(
         """
