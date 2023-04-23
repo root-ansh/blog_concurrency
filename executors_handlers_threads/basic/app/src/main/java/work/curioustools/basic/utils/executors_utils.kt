@@ -4,6 +4,12 @@ import android.app.Activity
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
+import android.util.Log
+import androidx.annotation.MainThread
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 
 /*
  * - Android provides handler and HandlerThread class for a simple parallel execution.
@@ -108,3 +114,128 @@ class AppExecutor private constructor(){
 
     }
 }
+
+
+// an executor which asks for either to execute task in main thread parallel thread
+// or parallel+sequential threadpool and returns result in main thread
+class AppExecutor2 {
+    private var sharedPoolExecutor: ThreadPoolExecutor? = ThreadPoolExecutor(1, 4, 10, TimeUnit.SECONDS, LinkedBlockingQueue(4), ThreadPoolExecutor.DiscardOldestPolicy())
+
+    private val mainThreadExecutor: Handler = Handler(Looper.getMainLooper())
+
+    private var executeOnMainThread = false
+    private var executeOnIOThread = false
+    private var executeOnSharedThread = true
+
+    fun inMainThread():AppExecutor2{
+        executeOnMainThread = true
+        executeOnIOThread = false
+        executeOnSharedThread = false
+        return this
+    }
+
+    fun inIOThread():AppExecutor2{
+        executeOnMainThread = false
+        executeOnIOThread = true
+        executeOnSharedThread = false
+        return this
+    }
+
+    fun inSharedThread():AppExecutor2{
+        executeOnMainThread = false
+        executeOnIOThread = false
+        executeOnSharedThread = true
+        return this
+    }
+
+    fun <T> execute(task: Task<T>) {
+        kotlin.runCatching {
+            when(true){
+                executeOnMainThread -> {
+                    mainThreadExecutor.post {
+                        val result = task.action()
+                        task.onSuccess(result)
+                    }
+                }
+                executeOnSharedThread ->{
+                    sharedPoolExecutor?.execute {
+                        val result = task.action()
+                        mainThreadExecutor.post { task.onSuccess(result) }
+                    }
+                }
+                executeOnIOThread ->{
+                    thread {
+                        val result = task.action()
+                        mainThreadExecutor.post { task.onSuccess(result) }
+                    }
+                }
+                else ->{}
+            }
+        }.exceptionOrNull()?.let {
+            it.printStackTrace()
+            Log.e(TAG, "job execute error: ${it.message}")
+            mainThreadExecutor.post { task.onError(it.message) }
+        }
+    }
+
+    fun destroy() {
+        sharedPoolExecutor?.shutdown()
+        sharedPoolExecutor = null
+    }
+
+    interface Task<T> {
+        fun action(): T?
+
+        @MainThread
+        fun onSuccess(result: T?)
+
+        @MainThread
+        fun onError(msg: String?){}
+
+    }
+
+    companion object {
+
+        private const val TAG = "JobExecutor"
+
+        @JvmStatic
+        fun main(args: Array<String>) {
+            // Test Case 1
+
+            val jobExecutor = AppExecutor2()
+            jobExecutor.inMainThread().execute(object : Task<String> {
+                override fun action(): String {
+                    Thread.sleep(2000)
+                    return "Hello World!" }
+                override fun onSuccess(result: String?) { Log.d(TAG, "Result: $result") }
+            })
+            jobExecutor.destroy()
+
+
+            val jobExecutor2 = AppExecutor2()
+            jobExecutor2.inSharedThread().execute(object : Task<String> {
+                override fun action(): String {
+                    Thread.sleep(2000)
+                    return "Hello World!" }
+                override fun onSuccess(result: String?) { Log.d(TAG, "Result: $result") }
+            })
+            jobExecutor2.destroy()
+
+
+
+            val jobExecutor3 = AppExecutor2()
+            jobExecutor3.inIOThread().execute(object : Task<String> {
+                override fun action(): String {
+                    Thread.sleep(2000)
+                    return "Hello World!" }
+                override fun onSuccess(result: String?) { Log.d(TAG, "Result: $result") }
+            })
+            jobExecutor3.destroy()
+
+
+
+
+        }
+    }
+}
+
