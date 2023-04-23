@@ -1,4 +1,4 @@
-package work.curioustools.basic.utils.edittext
+package work.curioustools.basic.utils
 
 import android.os.Handler
 import android.text.Editable
@@ -7,7 +7,7 @@ import android.widget.EditText
 
 
 //add watchers using builder pattern
-fun EditText.withCustomTextWatcher(customWatcher: CustomWatchers): CustomWatchers {
+fun EditText.withCustomTextWatcher(customWatcher: EditTextCustomWatchers): EditTextCustomWatchers {
     customWatcher.init(this)
     return customWatcher
 }

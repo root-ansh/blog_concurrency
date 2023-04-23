@@ -16,15 +16,7 @@ class ExampleUnitTest {
     fun addition_isCorrect() {
         //BasicNetworkConnection.connect()
         assertEquals(4, 2 + 2)
-
-        val f = f()
-//        while (!f.isDone || !f.isCancelled){
-//            println("waiting for future at t= ${System.currentTimeMillis()}")
-//            Thread.sleep(100)
-//        }
-        println("start @ ${System.currentTimeMillis()}")
-        println(f.get())
-        println("end @ ${System.currentTimeMillis()}")
+        BasicNetworkConnection.connectSync()
 
 
     }
