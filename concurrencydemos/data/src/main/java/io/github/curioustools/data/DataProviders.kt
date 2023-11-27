@@ -96,11 +96,5 @@ open class DataProviders {
             ╚╝
         """.trimIndent().toList()
     }
-    open fun immediateDataAsStream(): Stream<Char> = Stream.of(*immediateData().toTypedArray())
-    open fun immediateDataAsSequence(): Sequence<Char> = Sequence { immediateData().iterator() }
-
-
-    // todo data via streams, java flows,future,
-
 }
 
