@@ -15,3 +15,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "concurrency-demos"
 include(":ui")
+include(":data")
+include(":scenarios_jvm_coroutine_rx")
+include(":scenarios_android_coroutine_rx")
