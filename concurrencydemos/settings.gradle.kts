@@ -14,4 +14,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "concurrency-demos"
-include(":app")
+include(":ui")
