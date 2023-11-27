@@ -3,6 +3,7 @@ package io.github.curioustools.data
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.math.BigInteger
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.TimeUnit
@@ -75,6 +76,15 @@ open class DataProviders {
         }
         log("task finished at $currentTime")
         return JSONObject().also { it.put("result", "success") }
+    }
+    open fun longRunningTaskCpuIntensive(num:Int):BigInteger{
+        val start = System.currentTimeMillis().also { log("starting task at $it") }
+        var fact:BigInteger = BigInteger.ONE
+        for (i in 1..num){
+            fact = fact.multiply(BigInteger.valueOf(i.toLong()))
+        }
+        var end = System.currentTimeMillis().also { log("finished task at $it. time taken = ${it-start} ms") }
+        return fact
     }
 
     open fun longRunningTaskThreadSleep(duration: Long = TimeUnit.SECONDS.toMillis(3)): JSONObject {

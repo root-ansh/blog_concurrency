@@ -8,6 +8,8 @@ object Tester {
             //longRunningTaskThreadSleep().also { println("received data: $it") }
             //getDataAsStream().forEach { print(it) }
             //getDataAsSequence().onEach { print(it)  }
+
+            longRunningTaskCpuIntensive(100).also { println("received data:$it") }
         }
 
 
