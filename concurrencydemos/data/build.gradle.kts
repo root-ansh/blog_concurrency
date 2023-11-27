@@ -1,9 +1,11 @@
 plugins {
-    id("java-library")
     id("org.jetbrains.kotlin.jvm")
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_7
-    targetCompatibility = JavaVersion.VERSION_1_7
+    toolchain.languageVersion.set(JavaLanguageVersion.of(8))
+}
+dependencies{
+    implementation("org.json:json:20231013")
+
 }
