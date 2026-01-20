@@ -1,5 +1,7 @@
 package io.github.curioustools.data
 
+import io.github.curioustools.data.jdk_concurrency_stuff.threadId
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -9,20 +11,25 @@ import java.net.URL
 import java.util.concurrent.TimeUnit
 import java.util.stream.Stream
 import java.util.zip.GZIPInputStream
+import kotlin.concurrent.thread
 
 
 open class DataProviders {
-    protected var log = { it: Any -> println(it) }
+    companion object{
+        val defHeaders = hashMapOf(
+            "Connection" to "Keep-Alive",
+            "Accept-Encoding" to "gzip"
+        )
+    }
+    protected var log = { it: Any -> println("${threadId()} $it") }
     open  fun updateLogCallBack(callback: (Any) -> Unit) {
         log = callback
     }
 
+
     open fun networkConnection(
         url: String = "https://reqres.in/api/users?page=2",
-        headers: Map<String, String> = hashMapOf(
-            "Connection" to "Keep-Alive",
-            "Accept-Encoding" to "gzip"
-        ),
+        headers: Map<String, String> = defHeaders
     ): JSONObject? {
         log("connect() called with: url = $url,headers = $headers ")
         val urlObj = URL(url)
@@ -59,6 +66,24 @@ open class DataProviders {
         log("response string: $contentJson")
         return contentJson
     }
+
+
+    fun ncGetUsers(): JSONArray {
+        val usersResp = networkConnection("https://reqres.in/api/users")?:JSONObject()
+        return usersResp.getJSONArray("data")?: JSONArray()
+    }
+
+    fun ncGetColors(): JSONArray {
+        val usersResp = networkConnection("https://reqres.in/api/unknown")?:JSONObject()
+        return usersResp.getJSONArray("data")?:JSONArray()
+    }
+
+    fun ncGetColor(id:Int): JSONObject {
+        val usersResp = networkConnection("https://reqres.in/api/unknown/$id")?:JSONObject()
+        return usersResp.getJSONObject("data")?: JSONObject()
+    }
+
+
 
     open fun longRunningTask(duration: Long = TimeUnit.SECONDS.toMillis(3)): JSONObject {
         var currentTime = System.currentTimeMillis().also { log("starting task at $it") }
