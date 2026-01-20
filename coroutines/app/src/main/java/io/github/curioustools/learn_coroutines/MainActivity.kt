@@ -11,12 +11,23 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.lifecycleScope
 import io.github.curioustools.learn_coroutines.ui.theme.Learn_coroutinesTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // check all coroutines stuff in  test classes
+
+        lifecycleScope.launch {
+            Examples.testJobState3Cancel(this)
+        }
         setContent {
             Learn_coroutinesTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
