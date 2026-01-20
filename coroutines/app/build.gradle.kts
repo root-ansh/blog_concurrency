@@ -38,6 +38,13 @@ android {
         compose = true
     }
 }
+tasks.register<JavaExec>("runMain") {
+    group = "Execution"
+    description = "Runs the main function in Examples.kt"
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("io.github.curioustools.learn_coroutines.ExamplesKt")
+    standardInput = System.`in`
+}
 
 dependencies {
     implementation(libs.androidx.core.ktx)
