@@ -1,21 +1,161 @@
 package io.github.curioustools.learn_coroutines
 
+import android.os.Looper
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentSkipListSet
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
+
+suspend fun task(s: String,  d: Long = 200,s2: String = "",){
+    if (s=="1") error("something went wronf")
+    delay(d)
+    println("success: $s $s2 after $d millis")
+}
+
+fun runeer() {
+    runBlocking {
+        val hdlr = CoroutineExceptionHandler { _, err -> println("Handler caught: ${err.message}") }
+        launch(hdlr) {
+            supervisorScope {
+                val jasync = async { task("1",200,"async") }
+                val j1 = launch { task("1",200,"launch") }
+                val j2 = launch { task("2",200) }
+                runCatching {  jasync.await() }.getOrElse { println("Caught await error: ${it.message}") }
+                joinAll(j1,j2)
+                println("all ran")
+            }
+            println("cope based builder jobs fineshed")
+        }
+        println("launch is parallel so this will run before launch's internal stuff is completed")
+    }
+    println("run blocking finished")
+}
+
+
+
+
+
+
+class MyAnalyticsManager {
+    private val hdlr = CoroutineExceptionHandler { _, t -> println("error = ${t.message}") }
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob() + hdlr)
+    fun logEvent(event: String) {
+        scope.launch { /*long running coroutines builder /direct suspend function calls*/}
+        println("hello")
+    }
+    fun destroy() { scope.cancel() }
+}
 
 object Examples {
+
+    suspend fun call(){
+        if(Looper.getMainLooper().thread == Thread.currentThread()) throw Exception("Dont call on main thread")
+        delay(2000)
+        println("call completed")
+    }
+
+    fun testScope(viewModel: ViewModel?, activity: MainActivity?){
+
+        viewModel?.viewModelScope?.launch {
+            val j1 = launch{call()}
+            j1.join()
+            println("done")
+
+        }
+        val hdlr2 = CoroutineExceptionHandler { context, throwable -> println("causght = ${throwable.message}") }
+
+        viewModel?.viewModelScope?.launch(hdlr2) {
+            val j1 = launch{call()}
+            j1.join()
+            println("launch done")
+
+            val j2 = async{call()}
+            j2.await()
+            println("async done")
+        }
+
+
+
+
+        val scope = CoroutineScope(Dispatchers.IO)
+        val hdlr = CoroutineExceptionHandler { context, throwable -> println("causght = ${throwable.message}") }
+        val idealContext: CoroutineContext = scope.coroutineContext+hdlr+ Dispatchers.IO
+
+        val ctx: CoroutineContext = Dispatchers.IO
+        viewModel?.viewModelScope?.launch(
+            context = ctx,
+            block = { val x: CoroutineScope = this }
+        )
+
+        activity?.lifecycleScope?.launch(
+            context = ctx,
+            block = { val x: CoroutineScope = this }
+        )
+
+
+        GlobalScope.launch(
+            context = ctx,
+            block = { val x: CoroutineScope = this }
+        )
+
+        GlobalScope.async(
+            context = ctx,
+            block = { val x: CoroutineScope = this }
+        )
+        runBlocking(
+            context = ctx,
+            block = { val x: CoroutineScope = this }
+        )
+        CoroutineScope(ctx).launch (
+            context = ctx,
+            block = { val x: CoroutineScope = this }
+        )
+        CoroutineScope(ctx+ SupervisorJob()).launch (
+            context = ctx,
+            block = { val x: CoroutineScope = this }
+        )
+
+    }
+
+    suspend fun supendFunctionScope(){
+        val scope = CoroutineScope(Dispatchers.IO)
+        val hdlr = CoroutineExceptionHandler { context, throwable -> println("causght = ${throwable.message}") }
+        val idealContext: CoroutineContext = scope.coroutineContext+hdlr+ Dispatchers.IO
+
+        val s: String = withContext(idealContext){"Sat sri akal"}
+        val p: String = coroutineScope { "Namaste" }
+        val r: String = supervisorScope { "Hi" }
+        val x: String = suspendCancellableCoroutine {
+            val callback: () -> Unit = {  it.resume("Hello"){};}
+            it.invokeOnCancellation { callback() }
+        }
+        val k  = suspendCoroutine {
+            val callback: () -> Unit = {  it.resume("Outdated Hello");}
+            callback()
+        }
+    }
 
     fun String.change(coroutine: String): String {
         return this.replace(" ", "").replace("DefaultDispatcher-worker", coroutine)
@@ -498,6 +638,19 @@ object Examples {
     }
 
     fun testJobState2Crash(scope: CoroutineScope) = scope.launch {
+
+        val x = MutableSharedFlow<Int>(
+            replay = 0,
+            extraBufferCapacity = 0,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST//DROP_LATEST//SUSPEND
+        )
+        val y = Channel<Int>(
+            capacity = Channel.RENDEZVOUS,//.CONFLATED//.UNLIMITED//.BUFFERED,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST,//DROP_LATEST//SUSPEND
+            onUndeliveredElement = {}
+        )
+
+
         val handler = CoroutineExceptionHandler { _, e ->
             println("Caught by handler: ${e.message}")
         }
